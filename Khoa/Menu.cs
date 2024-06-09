@@ -3,30 +3,211 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
+using Timer = System.Windows.Forms.Timer;
+
 
 namespace Bai04
 {
     public partial class Menu : Form
     {
-       
-
+        private Timer alarmTimer;
         public Menu()
         {
             InitializeComponent();
             label1.Visible = false;
+            label2.Visible = false;
         }
 
-        public async void button1_Click(object sender, EventArgs e)
+
+        private async void sh_down_button_Click(object sender, EventArgs e)
+        {
+            progressBar1.Visible = false;
+            label1.Visible = false;
+            label2.Visible = true;
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string url = "https://vtv.vn/lich-phat-song.htm";
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string html = await response.Content.ReadAsStringAsync();
+
+                        // Phân tích nội dung HTML và trích xuất thông tin chương trình
+                        HtmlDocument document = new HtmlDocument();
+                        document.LoadHtml(html);
+
+                        // Trích xuất danh sách các ngày
+                        var dateNodes = document.DocumentNode.SelectNodes("//ul[@class='date-selector']/li");
+                        if (dateNodes == null)
+                        {
+                            MessageBox.Show("Không tìm thấy thông tin về các ngày.", "Lỗi");
+                            return;
+                        }
+
+                        // Trích xuất danh sách các kênh
+                        var channelNodes = document.DocumentNode.SelectNodes("//ul[@class='list-channel']/li");
+                        if (channelNodes == null)
+                        {
+                            MessageBox.Show("Không tìm thấy thông tin về các kênh.", "Lỗi");
+                            return;
+                        }
+
+                        // Tạo nội dung HTML tùy chỉnh
+                        StringBuilder htmlBuilder = new StringBuilder();
+                        htmlBuilder.Append("<html><body>");
+
+                        // Danh sách thả xuống chọn ngày
+                        htmlBuilder.Append("<select id='dateDropdown'>");
+                        foreach (var dateNode in dateNodes)
+                        {
+                            var dateText = dateNode.SelectSingleNode(".//span[@class='date-month']").InnerText.Trim();
+                            var date = DateTime.ParseExact(dateText, "dd/MM", CultureInfo.InvariantCulture);
+                            if (date < DateTime.Today)
+                            {
+                                continue; // Bỏ qua các ngày đã qua
+                            }
+
+                            var dayOfWeek = dateNode.SelectSingleNode(".//span[@class='day']").InnerText.Trim();
+
+                            htmlBuilder.Append($"<option value='{dateText}'>{dayOfWeek} - {dateText}</option>");
+                        }
+                        htmlBuilder.Append("</select>");
+
+                        // Danh sách thả xuống chọn kênh
+                        htmlBuilder.Append("<select id='channelDropdown'>");
+                        foreach (var channelNode in channelNodes)
+                        {
+                            var channelName = channelNode.SelectSingleNode(".//a").GetAttributeValue("title", "").Trim();
+
+                            htmlBuilder.Append($"<option value='{channelName}'>{channelName}</option>");
+                        }
+                        htmlBuilder.Append("</select>");
+
+                        // Script JavaScript để lưu ngày và kênh được chọn vào localStorage
+                        htmlBuilder.Append("<script>");
+                        htmlBuilder.Append("document.getElementById('dateDropdown').addEventListener('change', function() {");
+                        htmlBuilder.Append("localStorage.setItem('selectedDate', this.value);");
+                        htmlBuilder.Append("});");
+                        htmlBuilder.Append("document.getElementById('channelDropdown').addEventListener('change', function() {");
+                        htmlBuilder.Append("localStorage.setItem('selectedChannel', this.value);");
+                        htmlBuilder.Append("});");
+                        htmlBuilder.Append("</script>");
+
+                        htmlBuilder.Append("</body></html>");
+
+                        // Đảm bảo rằng WebView2 đã được khởi tạo
+                        await webView21.EnsureCoreWebView2Async();
+
+                        // Hiển thị nội dung HTML tùy chỉnh trong WebView2
+                        webView21.NavigateToString(htmlBuilder.ToString());
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error: Failed to retrieve web page. Status code: " + response.StatusCode);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+
+
+        private void formSize_changed(object sender, EventArgs e)
+        {
+            // Lấy kích thước mới của form
+            int newWidth = this.Width;
+            int newHeight = this.Height;
+
+            // Cập nhật kích thước của WebView2 để phù hợp với kích thước mới của form
+            webView21.Size = new Size(newWidth, newHeight);
+
+        }
+
+        private async void alarm_button_ClickAsync(object sender, EventArgs e)
+        {
+            try
+            {
+                // Lấy thông tin chương trình đã chọn từ localStorage
+                var selectedProgram = await webView21.CoreWebView2.ExecuteScriptAsync("localStorage.getItem('selectedProgram')");
+                var selectedTime = await webView21.CoreWebView2.ExecuteScriptAsync("localStorage.getItem('selectedTime')");
+
+                if (string.IsNullOrEmpty(selectedProgram) || string.IsNullOrEmpty(selectedTime))
+                {
+                    MessageBox.Show("Vui lòng chọn một chương trình truyền hình.", "Lỗi");
+                    return;
+                }
+
+                // Hiển thị thông tin chương trình đã chọn cho người dùng
+                MessageBox.Show($"Chương trình đã chọn: {selectedProgram.Trim('"')} vào lúc {selectedTime.Trim('"')}.", "Thông Báo");
+
+                // Lấy thời gian hiện tại và thời gian chương trình truyền hình
+                DateTime showTime = DateTime.ParseExact(selectedTime.Trim('"'), "HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+                showTime = showTime.Date + showTime.TimeOfDay;  // Thêm ngày hiện tại vào thời gian chương trình
+
+                // Tính toán thời gian cần đặt báo thức trước khi chương trình truyền hình được chiếu
+                TimeSpan alarmTime = showTime - DateTime.Now;
+
+                // Kiểm tra xem thời gian đặt báo thức có hợp lệ không
+                if (alarmTime.TotalSeconds <= 0)
+                {
+                    MessageBox.Show("Thời gian đặt báo thức không hợp lệ.", "Lỗi");
+                    return;
+                }
+
+                // Đặt báo thức
+
+                if (alarmTimer != null)
+                {
+                    alarmTimer.Stop();
+                    alarmTimer.Dispose();
+                }
+
+                alarmTimer = new Timer();
+                alarmTimer.Interval = (int)alarmTime.TotalMilliseconds;
+                alarmTimer.Tick += (s, args) =>
+                {
+                    // Hiển thị thông báo khi báo thức kích hoạt
+                    MessageBox.Show("Đã đến thời gian chiếu chương trình truyền hình!", "Báo Thức");
+
+                    // Tắt báo thức
+                    alarmTimer.Stop();
+                    alarmTimer.Dispose();
+                };
+                alarmTimer.Start();
+
+                // Hiển thị thông báo xác nhận cho người dùng
+                MessageBox.Show($"Báo thức đã được đặt cho chương trình truyền hình vào lúc {showTime}.", "Thông Báo");
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi nếu có
+                MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", "Lỗi");
+            }
+        } 
+
+            private async void film_download_button_Click(object sender, EventArgs e)
         {
             label1.Visible = true;
+            label2.Visible = false;
+            progressBar1.Visible = false;
             string url = "https://betacinemas.vn/phim.htm";
 
             progressBar1.Minimum = 0;
@@ -109,8 +290,8 @@ namespace Bai04
                     htmlBuilder.Append("<div style='flex: 1;'>");
                     htmlBuilder.AppendFormat("<h3><a href='{0}' target='_blank'>{1}</a></h3>", movieUrl, title);
                     // Thêm thông tin khác về phim ở đây (ví dụ: thể loại, ngày công chiếu, mô tả, v.v.)
-                    htmlBuilder.Append("</div>");
 
+                    htmlBuilder.Append("</div>");
                     htmlBuilder.Append("</div>");
                     htmlBuilder.Append("</div>");
 
@@ -152,24 +333,6 @@ namespace Bai04
             {
                 // Xử lý lỗi
                 MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", "Lỗi");
-            }
-        }
-
-        private async void button2_Click(object sender, EventArgs e)
-        {
-            // Lấy tiêu đề phim đã chọn từ JavaScript
-            var result = await webView21.ExecuteScriptAsync("selectedMovieTitle");
-            var selectedTitle = result.Trim('"'); // Loại bỏ dấu ngoặc kép
-
-            if (!string.IsNullOrEmpty(selectedTitle))
-            {
-                // Truyền tiêu đề phim qua form mới
-                bookingT form = new bookingT(selectedTitle);
-                form.ShowDialog();
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng chọn một bộ phim.", "Thông báo");
             }
         }
     }
