@@ -35,6 +35,7 @@
             show_download_button = new Button();
             label2 = new Label();
             alarm_button = new Button();
+            time_lb = new Label();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
             SuspendLayout();
             // 
@@ -109,11 +110,23 @@
             alarm_button.UseVisualStyleBackColor = true;
             alarm_button.Click += alarm_button_ClickAsync;
             // 
+            // time_lb
+            // 
+            time_lb.AutoSize = true;
+            time_lb.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
+            time_lb.ForeColor = Color.Red;
+            time_lb.Location = new Point(40, 740);
+            time_lb.Name = "time_lb";
+            time_lb.Size = new Size(349, 41);
+            time_lb.TabIndex = 7;
+            time_lb.Text = "Lịch chiếu chương trình";
+            // 
             // Menu
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(987, 803);
+            Controls.Add(time_lb);
             Controls.Add(alarm_button);
             Controls.Add(label2);
             Controls.Add(show_download_button);
@@ -123,6 +136,7 @@
             Controls.Add(webView21);
             Name = "Menu";
             Text = "test";
+            Load += sh_down_button_Click;
             SizeChanged += formSize_changed;
             ((System.ComponentModel.ISupportInitialize)webView21).EndInit();
             ResumeLayout(false);
@@ -138,5 +152,6 @@
         private Button show_download_button;
         private Label label2;
         private Button alarm_button;
+        private Label time_lb;
     }
 }

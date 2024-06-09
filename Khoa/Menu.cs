@@ -21,14 +21,21 @@ namespace Bai04
 {
     public partial class Menu : Form
     {
-        private Timer alarmTimer;
-        
+        private Timer currentTimeTimer;
 
         public Menu()
         {
             InitializeComponent();
+            currentTimeTimer = new Timer();
+            currentTimeTimer.Interval = 1000; // 1 giây
+            currentTimeTimer.Tick += CurrentTimeTimer_Tick;
+            currentTimeTimer.Start();
         }
 
+        private void CurrentTimeTimer_Tick(object sender, EventArgs e)
+        {
+            time_lb.Text = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy");
+        }
 
         private async void sh_down_button_Click(object sender, EventArgs e)
         {
@@ -69,14 +76,15 @@ namespace Bai04
 
                         // Tạo nội dung HTML tùy chỉnh
                         StringBuilder htmlBuilder = new StringBuilder();
-                        htmlBuilder.Append("<html><head><style>");
-                        htmlBuilder.Append("body { font-family: Arial, sans-serif; }");
-                        htmlBuilder.Append(".programs { margin-top: 20px; }");
-                        htmlBuilder.Append("select { margin-right: 10px; }");
-                        htmlBuilder.Append("</style></head><body>");
+                        htmlBuilder.Append("<html><body>");
+
+                        // Thêm đoạn mã CSS để highlight chương trình
+                        htmlBuilder.Append("<style>");
+                        htmlBuilder.Append(".highlight { background-color: yellow; }");
+                        htmlBuilder.Append("</style>");
 
                         // Danh sách thả xuống chọn ngày
-                        htmlBuilder.Append("<select id='dateDropdown' onchange='updatePrograms()'>");
+                        htmlBuilder.Append("<select id='dateDropdown' onchange='filterShows()'>");
                         foreach (var dateNode in dateNodes)
                         {
                             var dateText = dateNode.SelectSingleNode(".//span[@class='date-month']").InnerText.Trim();
@@ -87,44 +95,54 @@ namespace Bai04
                             }
 
                             var dayOfWeek = dateNode.SelectSingleNode(".//span[@class='day']").InnerText.Trim();
+
                             htmlBuilder.Append($"<option value='{dateText}'>{dayOfWeek} - {dateText}</option>");
                         }
                         htmlBuilder.Append("</select>");
 
                         // Danh sách thả xuống chọn kênh
-                        htmlBuilder.Append("<select id='channelDropdown' onchange='updatePrograms()'>");
+                        htmlBuilder.Append("<select id='channelDropdown' onchange='filterShows()'>");
                         int channelCount = 0; // Biến đếm số kênh
                         foreach (var channelNode in channelNodes)
                         {
                             var channelName = channelNode.SelectSingleNode(".//a").GetAttributeValue("title", "").Trim();
                             channelCount++; // Tăng biến đếm
+
                             htmlBuilder.Append($"<option value='{channelCount}'>{channelName}</option>");
                         }
                         htmlBuilder.Append("</select>");
 
-                        // Container để hiển thị các chương trình
-                        htmlBuilder.Append("<div id='programContainer'></div>");
+                        // Thêm container để hiển thị các chương trình
+                        htmlBuilder.Append("<div id='showsContainer'></div>");
 
-                        // JavaScript để cập nhật chương trình
+                        // Thêm script để xử lý sự kiện thay đổi của dropdown và highlight chương trình
                         htmlBuilder.Append("<script>");
-                        htmlBuilder.Append("function updatePrograms() {");
-                        htmlBuilder.Append("var dateDropdown = document.getElementById('dateDropdown');");
-                        htmlBuilder.Append("var channelDropdown = document.getElementById('channelDropdown');");
-                        htmlBuilder.Append("var selectedDate = dateDropdown.value;");
-                        htmlBuilder.Append("var selectedChannel = channelDropdown.value;");
-                        htmlBuilder.Append("var programContainer = document.getElementById('programContainer');");
-                        htmlBuilder.Append("programContainer.innerHTML = '';"); // Xóa nội dung hiện tại
-
-                        htmlBuilder.Append("var programs = document.querySelectorAll('.programs');");
-                        htmlBuilder.Append("programs.forEach(function(program) {");
-                        htmlBuilder.Append("if (program.dataset.date === selectedDate && program.dataset.channel === selectedChannel) {");
-                        htmlBuilder.Append("programContainer.innerHTML = program.innerHTML;");
+                        htmlBuilder.Append("function filterShows() {");
+                        htmlBuilder.Append("var selectedDate = document.getElementById('dateDropdown').value;");
+                        htmlBuilder.Append("var selectedChannel = document.getElementById('channelDropdown').value;");
+                        htmlBuilder.Append("var shows = document.querySelectorAll('.show');");
+                        htmlBuilder.Append("shows.forEach(function(show) {");
+                        htmlBuilder.Append("var showDate = show.getAttribute('data-date');");
+                        htmlBuilder.Append("var showChannel = show.getAttribute('data-channel');");
+                        htmlBuilder.Append("if (showDate === selectedDate && showChannel === selectedChannel) {");
+                        htmlBuilder.Append("show.style.display = 'block';");
+                        htmlBuilder.Append("} else {");
+                        htmlBuilder.Append("show.style.display = 'none';");
                         htmlBuilder.Append("}");
                         htmlBuilder.Append("});");
                         htmlBuilder.Append("}");
+                        htmlBuilder.Append("var selectedShowTime = '';");
+                        htmlBuilder.Append("function selectShow(element, time) {");
+                        htmlBuilder.Append("var shows = document.querySelectorAll('.show');");
+                        htmlBuilder.Append("shows.forEach(function(show) {");
+                        htmlBuilder.Append("show.classList.remove('highlight');");
+                        htmlBuilder.Append("});");
+                        htmlBuilder.Append("element.classList.add('highlight');");
+                        htmlBuilder.Append("selectedShowTime = time;");
+                        htmlBuilder.Append("}");
                         htmlBuilder.Append("</script>");
 
-                        // Lặp qua từng kênh và ngày để trích xuất thông tin chương trình
+                        // Lặp qua từng kênh để trích xuất thông tin chương trình
                         channelCount = 0; // Đặt lại biến đếm để sử dụng đúng cách trong vòng lặp trích xuất chương trình
                         foreach (var channelNode in channelNodes)
                         {
@@ -139,21 +157,17 @@ namespace Bai04
                                 var programItems = programsNode.SelectNodes("./li");
                                 if (programItems != null)
                                 {
-                                    // Tạo nội dung HTML tùy chỉnh cho từng kênh
-                                    StringBuilder channelHtmlBuilder = new StringBuilder();
-                                    channelHtmlBuilder.Append($"<div id='{channelName}'>");
-                                    channelHtmlBuilder.Append($"<h2>{channelName}</h2>");
-                                    channelHtmlBuilder.Append("<div class='programs'>");
                                     foreach (var programItem in programItems)
                                     {
                                         var time = programItem.SelectSingleNode(".//span[@class='time']").InnerText.Trim();
                                         var title = programItem.SelectSingleNode(".//span[@class='title']").InnerText.Trim();
-                                        channelHtmlBuilder.Append($"<p>{time} - {title}</p>");
-                                    }
-                                    channelHtmlBuilder.Append("</div></div>");
+                                        var dateText = document.DocumentNode.SelectSingleNode(".//ul[@class='date-selector']//li[contains(@class, 'active')]//span[@class='date-month']").InnerText.Trim();
 
-                                    // Thêm thông tin chương trình của kênh này vào nội dung chung
-                                    htmlBuilder.Append(channelHtmlBuilder.ToString());
+                                        // Tạo đoạn HTML cho chương trình này và thêm vào nội dung chung
+                                        htmlBuilder.Append($"<div class='show' data-date='{dateText}' data-channel='{channelCount}' style='display:none;' onclick='selectShow(this, \"{time}\")'>");
+                                        htmlBuilder.Append($"<h3>{time} - {title}</h3>");
+                                        htmlBuilder.Append($"</div>");
+                                    }
                                 }
                             }
                         }
@@ -180,6 +194,8 @@ namespace Bai04
 
 
 
+
+
         private void formSize_changed(object sender, EventArgs e)
         {
             // Lấy kích thước mới của form
@@ -195,65 +211,60 @@ namespace Bai04
         {
             try
             {
-                // Lấy thông tin chương trình đã chọn từ localStorage
-                var selectedProgram = await webView21.CoreWebView2.ExecuteScriptAsync("localStorage.getItem('selectedProgram')");
-                var selectedTime = await webView21.CoreWebView2.ExecuteScriptAsync("localStorage.getItem('selectedTime')");
+                // Lấy khung giờ đã chọn từ biến JavaScript
+                string selectedShowTime = await webView21.ExecuteScriptAsync("selectedShowTime");
 
-                if (string.IsNullOrEmpty(selectedProgram) || string.IsNullOrEmpty(selectedTime))
+                // Xử lý chuỗi JSON từ JavaScript
+                selectedShowTime = selectedShowTime.Trim('"');
+
+                if (string.IsNullOrEmpty(selectedShowTime))
                 {
-                    MessageBox.Show("Vui lòng chọn một chương trình truyền hình.", "Lỗi");
+                    MessageBox.Show("Bạn chưa chọn chương trình nào.", "Thông báo");
                     return;
                 }
 
-                // Hiển thị thông tin chương trình đã chọn cho người dùng
-                MessageBox.Show($"Chương trình đã chọn: {selectedProgram.Trim('"')} vào lúc {selectedTime.Trim('"')}.", "Thông Báo");
-
-                // Lấy thời gian hiện tại và thời gian chương trình truyền hình
-                DateTime showTime = DateTime.ParseExact(selectedTime.Trim('"'), "HH:mm", System.Globalization.CultureInfo.InvariantCulture);
-                showTime = showTime.Date + showTime.TimeOfDay;  // Thêm ngày hiện tại vào thời gian chương trình
-
-                // Tính toán thời gian cần đặt báo thức trước khi chương trình truyền hình được chiếu
-                TimeSpan alarmTime = showTime - DateTime.Now;
-
-                // Kiểm tra xem thời gian đặt báo thức có hợp lệ không
-                if (alarmTime.TotalSeconds <= 0)
+                // Chuyển đổi khung giờ sang DateTime
+                DateTime showTime;
+                if (!DateTime.TryParseExact(selectedShowTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out showTime))
                 {
-                    MessageBox.Show("Thời gian đặt báo thức không hợp lệ.", "Lỗi");
+                    MessageBox.Show("Khung giờ không hợp lệ.", "Thông báo");
                     return;
                 }
+
+                DateTime currentTime = DateTime.Now;
+                DateTime showDateTime = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, showTime.Hour, showTime.Minute, 0);
+
+                // Kiểm tra thời gian chương trình có hợp lệ không (không phải thời gian đã qua)
+                if (showDateTime <= currentTime)
+                {
+                    MessageBox.Show("Khung giờ đã qua, không thể đặt báo thức.", "Thông báo");
+                    return;
+                }
+
+                // Tính thời gian còn lại để đặt báo thức
+                TimeSpan timeUntilShow = showDateTime - currentTime;
 
                 // Đặt báo thức
-
-                if (alarmTimer != null)
+                Timer timer = new Timer();
+                timer.Interval = (int)timeUntilShow.TotalMilliseconds;
+                timer.Tick += (s, args) =>
                 {
-                    alarmTimer.Stop();
-                    alarmTimer.Dispose();
-                }
-
-                alarmTimer = new Timer();
-                alarmTimer.Interval = (int)alarmTime.TotalMilliseconds;
-                alarmTimer.Tick += (s, args) =>
-                {
-                    // Hiển thị thông báo khi báo thức kích hoạt
-                    MessageBox.Show("Đã đến thời gian chiếu chương trình truyền hình!", "Báo Thức");
-
-                    // Tắt báo thức
-                    alarmTimer.Stop();
-                    alarmTimer.Dispose();
+                    timer.Stop();
+                    MessageBox.Show("Đến giờ xem chương trình rồi!", "Thông báo");
                 };
-                alarmTimer.Start();
+                timer.Start();
 
-                // Hiển thị thông báo xác nhận cho người dùng
-                MessageBox.Show($"Báo thức đã được đặt cho chương trình truyền hình vào lúc {showTime}.", "Thông Báo");
+                MessageBox.Show("Báo thức đã được đặt thành công.", "Thông báo");
             }
             catch (Exception ex)
             {
-                // Xử lý lỗi nếu có
-                MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", "Lỗi");
+                MessageBox.Show("Lỗi: " + ex.Message);
             }
-        } 
+        }
 
-            private async void film_download_button_Click(object sender, EventArgs e)
+
+
+        private async void film_download_button_Click(object sender, EventArgs e)
         {
             label1.Visible = true;
             label2.Visible = false;
