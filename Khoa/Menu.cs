@@ -32,6 +32,20 @@ namespace Bai04
             currentTimeTimer.Start();
         }
 
+
+        private int initialFormWidth;
+        private int initialFormHeight;
+        private int initialWebViewWidth;
+        private int initialWebViewHeight;
+
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Lưu kích thước ban đầu của form và WebView2
+            initialFormWidth = this.Width;
+            initialFormHeight = this.Height;
+        }
+
         private void CurrentTimeTimer_Tick(object sender, EventArgs e)
         {
             time_lb.Text = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy");
@@ -39,6 +53,7 @@ namespace Bai04
 
         private async void sh_down_button_Click(object sender, EventArgs e)
         {
+            webView21.Visible = true;
             progressBar1.Visible = false;
             label1.Visible = false;
             label2.Visible = true;
@@ -80,7 +95,7 @@ namespace Bai04
 
                         // Thêm đoạn mã CSS để highlight chương trình
                         htmlBuilder.Append("<style>");
-                        htmlBuilder.Append(".highlight { background-color: yellow; }");
+                        htmlBuilder.Append(".highlight { background-color: FFBBFF; }");
                         htmlBuilder.Append("</style>");
 
                         // Danh sách thả xuống chọn ngày
@@ -115,32 +130,32 @@ namespace Bai04
                         // Thêm container để hiển thị các chương trình
                         htmlBuilder.Append("<div id='showsContainer'></div>");
 
-                        // Thêm script để xử lý sự kiện thay đổi của dropdown và highlight chương trình
-                        htmlBuilder.Append("<script>");
-                        htmlBuilder.Append("function filterShows() {");
-                        htmlBuilder.Append("var selectedDate = document.getElementById('dateDropdown').value;");
-                        htmlBuilder.Append("var selectedChannel = document.getElementById('channelDropdown').value;");
-                        htmlBuilder.Append("var shows = document.querySelectorAll('.show');");
-                        htmlBuilder.Append("shows.forEach(function(show) {");
-                        htmlBuilder.Append("var showDate = show.getAttribute('data-date');");
-                        htmlBuilder.Append("var showChannel = show.getAttribute('data-channel');");
-                        htmlBuilder.Append("if (showDate === selectedDate && showChannel === selectedChannel) {");
-                        htmlBuilder.Append("show.style.display = 'block';");
-                        htmlBuilder.Append("} else {");
-                        htmlBuilder.Append("show.style.display = 'none';");
-                        htmlBuilder.Append("}");
-                        htmlBuilder.Append("});");
-                        htmlBuilder.Append("}");
-                        htmlBuilder.Append("var selectedShowTime = '';");
-                        htmlBuilder.Append("function selectShow(element, time) {");
-                        htmlBuilder.Append("var shows = document.querySelectorAll('.show');");
-                        htmlBuilder.Append("shows.forEach(function(show) {");
-                        htmlBuilder.Append("show.classList.remove('highlight');");
-                        htmlBuilder.Append("});");
-                        htmlBuilder.Append("element.classList.add('highlight');");
-                        htmlBuilder.Append("selectedShowTime = time;");
-                        htmlBuilder.Append("}");
-                        htmlBuilder.Append("</script>");
+                        htmlBuilder.AppendLine("<div id='showsContainer'></div>");
+                        htmlBuilder.AppendLine("<script>");
+                        htmlBuilder.AppendLine("function filterShows() {");
+                        htmlBuilder.AppendLine("    var selectedDate = document.getElementById('dateDropdown').value;");
+                        htmlBuilder.AppendLine("    var selectedChannel = document.getElementById('channelDropdown').value;");
+                        htmlBuilder.AppendLine("    var shows = document.querySelectorAll('.show');");
+                        htmlBuilder.AppendLine("    shows.forEach(function(show) {");
+                        htmlBuilder.AppendLine("        var showDate = show.getAttribute('data-date');");
+                        htmlBuilder.AppendLine("        var showChannel = show.getAttribute('data-channel');");
+                        htmlBuilder.AppendLine("        if (showDate === selectedDate && showChannel === selectedChannel) {");
+                        htmlBuilder.AppendLine("            show.style.display = 'block';");
+                        htmlBuilder.AppendLine("        } else {");
+                        htmlBuilder.AppendLine("            show.style.display = 'none';");
+                        htmlBuilder.AppendLine("        }");
+                        htmlBuilder.AppendLine("    });");
+                        htmlBuilder.AppendLine("}");
+                        htmlBuilder.AppendLine("var selectedShowTime = '';");
+                        htmlBuilder.AppendLine("function selectShow(element, time) {");
+                        htmlBuilder.AppendLine("    var shows = document.querySelectorAll('.show');");
+                        htmlBuilder.AppendLine("    shows.forEach(function(show) {");
+                        htmlBuilder.AppendLine("        show.classList.remove('highlight');");
+                        htmlBuilder.AppendLine("    });");
+                        htmlBuilder.AppendLine("    element.classList.add('highlight');");
+                        htmlBuilder.AppendLine("    selectedShowTime = time;");
+                        htmlBuilder.AppendLine("}");
+                        htmlBuilder.AppendLine("</script>");
 
                         // Lặp qua từng kênh để trích xuất thông tin chương trình
                         channelCount = 0; // Đặt lại biến đếm để sử dụng đúng cách trong vòng lặp trích xuất chương trình
@@ -202,10 +217,16 @@ namespace Bai04
             int newWidth = this.Width;
             int newHeight = this.Height;
 
-            // Cập nhật kích thước của WebView2 để phù hợp với kích thước mới của form
-            webView21.Size = new Size(newWidth, newHeight);
+            // Tính tỉ lệ giữa kích thước mới của form và kích thước ban đầu của form
+            float widthRatio = (float)newWidth / initialFormWidth;
+            float heightRatio = (float)newHeight / initialFormHeight;
 
+            
+            // Cập nhật lại kích thước ban đầu của form
+            initialFormWidth = newWidth;
+            initialFormHeight = newHeight;
         }
+
 
         private async void alarm_button_ClickAsync(object sender, EventArgs e)
         {
@@ -332,7 +353,7 @@ namespace Bai04
                     htmlBuilder.Append("<style>");
                     htmlBuilder.Append(".highlighted-layout {");
                     htmlBuilder.Append("border: 2px solid blue; /* Thay đổi màu viền khi layout được chọn */");
-                    htmlBuilder.Append("background-color: #42bde3; /* Thay đổi màu nền khi layout được chọn */");
+                    htmlBuilder.Append("background-color: #FFBBFF; /* Thay đổi màu nền khi layout được chọn */");
                     htmlBuilder.Append("}");
                     htmlBuilder.Append("</style>");
                     htmlBuilder.Append("</head>");

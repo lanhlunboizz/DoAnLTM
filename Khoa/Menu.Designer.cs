@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Menu));
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             film_download_button = new Button();
             progressBar1 = new ProgressBar();
@@ -42,12 +43,15 @@
             // webView21
             // 
             webView21.AllowExternalDrop = true;
+            webView21.BackColor = Color.FromArgb(255, 224, 192);
+            webView21.BackgroundImage = (Image)resources.GetObject("webView21.BackgroundImage");
             webView21.CreationProperties = null;
-            webView21.DefaultBackgroundColor = Color.White;
+            webView21.DefaultBackgroundColor = Color.Lavender;
             webView21.Location = new Point(11, 67);
             webView21.Name = "webView21";
             webView21.Size = new Size(944, 643);
             webView21.TabIndex = 0;
+            webView21.Visible = false;
             webView21.ZoomFactor = 1D;
             webView21.SizeChanged += formSize_changed;
             // 
@@ -67,12 +71,14 @@
             progressBar1.Name = "progressBar1";
             progressBar1.Size = new Size(611, 45);
             progressBar1.TabIndex = 2;
+            progressBar1.Visible = false;
             // 
             // label1
             // 
             label1.AutoSize = true;
+            label1.BackColor = Color.Transparent;
             label1.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            label1.ForeColor = Color.Red;
+            label1.ForeColor = Color.LavenderBlush;
             label1.Location = new Point(12, 9);
             label1.Name = "label1";
             label1.Size = new Size(240, 41);
@@ -81,6 +87,7 @@
             // 
             // show_download_button
             // 
+            show_download_button.Font = new Font("Segoe UI", 9F);
             show_download_button.Location = new Point(476, 12);
             show_download_button.Name = "show_download_button";
             show_download_button.Size = new Size(237, 39);
@@ -92,8 +99,10 @@
             // label2
             // 
             label2.AutoSize = true;
+            label2.BackColor = Color.Transparent;
             label2.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            label2.ForeColor = Color.Red;
+            label2.ForeColor = Color.LavenderBlush;
+            label2.ImageKey = "(none)";
             label2.Location = new Point(12, 9);
             label2.Name = "label2";
             label2.Size = new Size(349, 41);
@@ -113,8 +122,9 @@
             // time_lb
             // 
             time_lb.AutoSize = true;
+            time_lb.BackColor = Color.Transparent;
             time_lb.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            time_lb.ForeColor = Color.Red;
+            time_lb.ForeColor = Color.LavenderBlush;
             time_lb.Location = new Point(40, 740);
             time_lb.Name = "time_lb";
             time_lb.Size = new Size(349, 41);
@@ -125,6 +135,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             ClientSize = new Size(987, 803);
             Controls.Add(time_lb);
             Controls.Add(alarm_button);
@@ -136,7 +147,7 @@
             Controls.Add(webView21);
             Name = "Menu";
             Text = "test";
-            Load += sh_down_button_Click;
+            Load += Form1_Load;
             SizeChanged += formSize_changed;
             ((System.ComponentModel.ISupportInitialize)webView21).EndInit();
             ResumeLayout(false);
