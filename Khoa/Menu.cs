@@ -22,11 +22,11 @@ namespace Bai04
     public partial class Menu : Form
     {
         private Timer alarmTimer;
+        
+
         public Menu()
         {
             InitializeComponent();
-            label1.Visible = false;
-            label2.Visible = false;
         }
 
 
@@ -69,10 +69,14 @@ namespace Bai04
 
                         // Tạo nội dung HTML tùy chỉnh
                         StringBuilder htmlBuilder = new StringBuilder();
-                        htmlBuilder.Append("<html><body>");
+                        htmlBuilder.Append("<html><head><style>");
+                        htmlBuilder.Append("body { font-family: Arial, sans-serif; }");
+                        htmlBuilder.Append(".programs { margin-top: 20px; }");
+                        htmlBuilder.Append("select { margin-right: 10px; }");
+                        htmlBuilder.Append("</style></head><body>");
 
                         // Danh sách thả xuống chọn ngày
-                        htmlBuilder.Append("<select id='dateDropdown'>");
+                        htmlBuilder.Append("<select id='dateDropdown' onchange='updatePrograms()'>");
                         foreach (var dateNode in dateNodes)
                         {
                             var dateText = dateNode.SelectSingleNode(".//span[@class='date-month']").InnerText.Trim();
@@ -83,30 +87,76 @@ namespace Bai04
                             }
 
                             var dayOfWeek = dateNode.SelectSingleNode(".//span[@class='day']").InnerText.Trim();
-
                             htmlBuilder.Append($"<option value='{dateText}'>{dayOfWeek} - {dateText}</option>");
                         }
                         htmlBuilder.Append("</select>");
 
                         // Danh sách thả xuống chọn kênh
-                        htmlBuilder.Append("<select id='channelDropdown'>");
+                        htmlBuilder.Append("<select id='channelDropdown' onchange='updatePrograms()'>");
+                        int channelCount = 0; // Biến đếm số kênh
                         foreach (var channelNode in channelNodes)
                         {
                             var channelName = channelNode.SelectSingleNode(".//a").GetAttributeValue("title", "").Trim();
-
-                            htmlBuilder.Append($"<option value='{channelName}'>{channelName}</option>");
+                            channelCount++; // Tăng biến đếm
+                            htmlBuilder.Append($"<option value='{channelCount}'>{channelName}</option>");
                         }
                         htmlBuilder.Append("</select>");
 
-                        // Script JavaScript để lưu ngày và kênh được chọn vào localStorage
+                        // Container để hiển thị các chương trình
+                        htmlBuilder.Append("<div id='programContainer'></div>");
+
+                        // JavaScript để cập nhật chương trình
                         htmlBuilder.Append("<script>");
-                        htmlBuilder.Append("document.getElementById('dateDropdown').addEventListener('change', function() {");
-                        htmlBuilder.Append("localStorage.setItem('selectedDate', this.value);");
+                        htmlBuilder.Append("function updatePrograms() {");
+                        htmlBuilder.Append("var dateDropdown = document.getElementById('dateDropdown');");
+                        htmlBuilder.Append("var channelDropdown = document.getElementById('channelDropdown');");
+                        htmlBuilder.Append("var selectedDate = dateDropdown.value;");
+                        htmlBuilder.Append("var selectedChannel = channelDropdown.value;");
+                        htmlBuilder.Append("var programContainer = document.getElementById('programContainer');");
+                        htmlBuilder.Append("programContainer.innerHTML = '';"); // Xóa nội dung hiện tại
+
+                        htmlBuilder.Append("var programs = document.querySelectorAll('.programs');");
+                        htmlBuilder.Append("programs.forEach(function(program) {");
+                        htmlBuilder.Append("if (program.dataset.date === selectedDate && program.dataset.channel === selectedChannel) {");
+                        htmlBuilder.Append("programContainer.innerHTML = program.innerHTML;");
+                        htmlBuilder.Append("}");
                         htmlBuilder.Append("});");
-                        htmlBuilder.Append("document.getElementById('channelDropdown').addEventListener('change', function() {");
-                        htmlBuilder.Append("localStorage.setItem('selectedChannel', this.value);");
-                        htmlBuilder.Append("});");
+                        htmlBuilder.Append("}");
                         htmlBuilder.Append("</script>");
+
+                        // Lặp qua từng kênh và ngày để trích xuất thông tin chương trình
+                        channelCount = 0; // Đặt lại biến đếm để sử dụng đúng cách trong vòng lặp trích xuất chương trình
+                        foreach (var channelNode in channelNodes)
+                        {
+                            var channelName = channelNode.SelectSingleNode(".//a").GetAttributeValue("title", "").Trim();
+                            channelCount++; // Tăng biến đếm
+
+                            var programsNode = document.DocumentNode.SelectSingleNode($"//*[@id='wrapper']/ul[{channelCount}]"); // Sử dụng biến đếm kênh
+
+                            if (programsNode != null)
+                            {
+                                // Trích xuất thông tin các chương trình
+                                var programItems = programsNode.SelectNodes("./li");
+                                if (programItems != null)
+                                {
+                                    // Tạo nội dung HTML tùy chỉnh cho từng kênh
+                                    StringBuilder channelHtmlBuilder = new StringBuilder();
+                                    channelHtmlBuilder.Append($"<div id='{channelName}'>");
+                                    channelHtmlBuilder.Append($"<h2>{channelName}</h2>");
+                                    channelHtmlBuilder.Append("<div class='programs'>");
+                                    foreach (var programItem in programItems)
+                                    {
+                                        var time = programItem.SelectSingleNode(".//span[@class='time']").InnerText.Trim();
+                                        var title = programItem.SelectSingleNode(".//span[@class='title']").InnerText.Trim();
+                                        channelHtmlBuilder.Append($"<p>{time} - {title}</p>");
+                                    }
+                                    channelHtmlBuilder.Append("</div></div>");
+
+                                    // Thêm thông tin chương trình của kênh này vào nội dung chung
+                                    htmlBuilder.Append(channelHtmlBuilder.ToString());
+                                }
+                            }
+                        }
 
                         htmlBuilder.Append("</body></html>");
 
@@ -118,13 +168,13 @@ namespace Bai04
                     }
                     else
                     {
-                        MessageBox.Show("Error: Failed to retrieve web page. Status code: " + response.StatusCode);
+                        MessageBox.Show("Lỗi: Không thể lấy trang web. Mã trạng thái: " + response.StatusCode);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show("Lỗi: " + ex.Message);
             }
         }
 
