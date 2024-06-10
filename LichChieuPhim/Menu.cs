@@ -35,8 +35,6 @@ namespace Bai04
 
         private int initialFormWidth;
         private int initialFormHeight;
-        private int initialWebViewWidth;
-        private int initialWebViewHeight;
 
 
         private void Form1_Load(object sender, EventArgs e)
@@ -54,6 +52,7 @@ namespace Bai04
         private async void sh_down_button_Click(object sender, EventArgs e)
         {
             webView21.Visible = true;
+            alarm_button.Visible = true;
             progressBar1.Visible = false;
             label1.Visible = false;
             label2.Visible = true;
@@ -287,8 +286,10 @@ namespace Bai04
 
         private async void film_download_button_Click(object sender, EventArgs e)
         {
+            webView21.Visible = true;
             label1.Visible = true;
             label2.Visible = false;
+            alarm_button.Visible = false;
             progressBar1.Visible = false;
             string url = "https://betacinemas.vn/phim.htm";
 

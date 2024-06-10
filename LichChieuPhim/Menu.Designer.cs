@@ -117,6 +117,7 @@
             alarm_button.TabIndex = 6;
             alarm_button.Text = "Đặt báo thức ";
             alarm_button.UseVisualStyleBackColor = true;
+            alarm_button.Visible = false;
             alarm_button.Click += alarm_button_ClickAsync;
             // 
             // time_lb
