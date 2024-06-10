@@ -31,7 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Menu));
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             film_download_button = new Button();
-            progressBar1 = new ProgressBar();
             label1 = new Label();
             show_download_button = new Button();
             label2 = new Label();
@@ -64,14 +63,6 @@
             film_download_button.Text = "Tải danh sách phim";
             film_download_button.UseVisualStyleBackColor = true;
             film_download_button.Click += film_download_button_Click;
-            // 
-            // progressBar1
-            // 
-            progressBar1.Location = new Point(40, 736);
-            progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(611, 45);
-            progressBar1.TabIndex = 2;
-            progressBar1.Visible = false;
             // 
             // label1
             // 
@@ -131,6 +122,7 @@
             time_lb.Size = new Size(349, 41);
             time_lb.TabIndex = 7;
             time_lb.Text = "Lịch chiếu chương trình";
+            time_lb.TextAlign = ContentAlignment.BottomLeft;
             // 
             // Menu
             // 
@@ -143,12 +135,11 @@
             Controls.Add(label2);
             Controls.Add(show_download_button);
             Controls.Add(label1);
-            Controls.Add(progressBar1);
             Controls.Add(film_download_button);
             Controls.Add(webView21);
             Name = "Menu";
             Text = "test";
-            Load += Form1_Load;
+            Load += form_Load;
             SizeChanged += formSize_changed;
             ((System.ComponentModel.ISupportInitialize)webView21).EndInit();
             ResumeLayout(false);
@@ -159,7 +150,6 @@
 
         private Microsoft.Web.WebView2.WinForms.WebView2 webView21;
         private Button film_download_button;
-        private ProgressBar progressBar1;
         private Label label1;
         private Button show_download_button;
         private Label label2;

@@ -22,6 +22,13 @@ namespace Bai04
     public partial class Menu : Form
     {
         private Timer currentTimeTimer;
+        private int initialFormWidth;
+        private int initialFormHeight;
+        private int initialWebViewWidth;
+        private int initialWebViewHeight;
+        private int initialAlarmButtonLeft;
+        private int initialAlarmButtonTop;
+        private int Timelb;
 
         public Menu()
         {
@@ -30,19 +37,45 @@ namespace Bai04
             currentTimeTimer.Interval = 1000; // 1 giây
             currentTimeTimer.Tick += CurrentTimeTimer_Tick;
             currentTimeTimer.Start();
+
+            this.Resize += formSize_changed;
         }
-
-
-        private int initialFormWidth;
-        private int initialFormHeight;
-
-
-        private void Form1_Load(object sender, EventArgs e)
+       
+        private void form_Load(object sender, EventArgs e)
         {
-            // Lưu kích thước ban đầu của form và WebView2
             initialFormWidth = this.Width;
             initialFormHeight = this.Height;
+            initialWebViewWidth = webView21.Width;
+            initialWebViewHeight = webView21.Height;
+            initialAlarmButtonLeft = alarm_button.Left;
+            initialAlarmButtonTop = alarm_button.Top;
+            Timelb = time_lb.Left;
+            Timelb = time_lb.Top;
         }
+
+        private void formSize_changed(object sender, EventArgs e)
+        {
+            // Get the new size of the form
+            int newWidth = this.Width;
+            int newHeight = this.Height;
+
+            // Calculate the ratio between the new size and the initial size of the form
+            float widthRatio = (float)newWidth / initialFormWidth;
+            float heightRatio = (float)newHeight / initialFormHeight;
+
+            // Update the size of the WebView2
+            webView21.Width = (int)(initialWebViewWidth * widthRatio);
+            webView21.Height = (int)(initialWebViewHeight * heightRatio);
+
+            // Update the position of the alarm button
+            alarm_button.Left = (int)(initialAlarmButtonLeft * widthRatio);
+            alarm_button.Top = (int)(initialAlarmButtonTop * heightRatio);
+
+            //// Update the position of the label
+            time_lb.Left = (int)(Timelb * widthRatio *0.5);
+            time_lb.Top = (int)(Timelb * heightRatio);
+        }
+
 
         private void CurrentTimeTimer_Tick(object sender, EventArgs e)
         {
@@ -53,7 +86,6 @@ namespace Bai04
         {
             webView21.Visible = true;
             alarm_button.Visible = true;
-            progressBar1.Visible = false;
             label1.Visible = false;
             label2.Visible = true;
 
@@ -97,22 +129,26 @@ namespace Bai04
                         htmlBuilder.Append(".highlight { background-color: FFBBFF; }");
                         htmlBuilder.Append("</style>");
 
+                        // Xác định ngày hiện tại
+                        DateTime currentDate = DateTime.Today;
+
                         // Danh sách thả xuống chọn ngày
                         htmlBuilder.Append("<select id='dateDropdown' onchange='filterShows()'>");
                         foreach (var dateNode in dateNodes)
                         {
                             var dateText = dateNode.SelectSingleNode(".//span[@class='date-month']").InnerText.Trim();
                             var date = DateTime.ParseExact(dateText, "dd/MM", CultureInfo.InvariantCulture);
-                            if (date < DateTime.Today)
+
+                            // Chỉ hiển thị và chọn ngày hiện tại
+                            if (date == currentDate)
                             {
-                                continue; // Bỏ qua các ngày đã qua
+                                var dayOfWeek = dateNode.SelectSingleNode(".//span[@class='day']").InnerText.Trim();
+                                htmlBuilder.Append($"<option value='{dateText}' selected>{dayOfWeek} - {dateText}</option>");
+                                break; // Thoát khỏi vòng lặp sau khi đã thêm ngày hiện tại
                             }
-
-                            var dayOfWeek = dateNode.SelectSingleNode(".//span[@class='day']").InnerText.Trim();
-
-                            htmlBuilder.Append($"<option value='{dateText}'>{dayOfWeek} - {dateText}</option>");
                         }
                         htmlBuilder.Append("</select>");
+
 
                         // Danh sách thả xuống chọn kênh
                         htmlBuilder.Append("<select id='channelDropdown' onchange='filterShows()'>");
@@ -129,8 +165,14 @@ namespace Bai04
                         // Thêm container để hiển thị các chương trình
                         htmlBuilder.Append("<div id='showsContainer'></div>");
 
-                        htmlBuilder.AppendLine("<div id='showsContainer'></div>");
+                        htmlBuilder.AppendLine("<style>");
+                        htmlBuilder.AppendLine(".show { cursor: pointer; }"); // Sử dụng hand pointer khi di chuyển qua các phần tử có class 'show'
+                        htmlBuilder.AppendLine("</style>");
+
                         htmlBuilder.AppendLine("<script>");
+                        htmlBuilder.AppendLine("document.addEventListener('DOMContentLoaded', function() {");
+                        htmlBuilder.AppendLine("    filterShows(); // Chạy hàm filterShows() ngay khi trang web được tải");
+                        htmlBuilder.AppendLine("});");
                         htmlBuilder.AppendLine("function filterShows() {");
                         htmlBuilder.AppendLine("    var selectedDate = document.getElementById('dateDropdown').value;");
                         htmlBuilder.AppendLine("    var selectedChannel = document.getElementById('channelDropdown').value;");
@@ -155,6 +197,10 @@ namespace Bai04
                         htmlBuilder.AppendLine("    selectedShowTime = time;");
                         htmlBuilder.AppendLine("}");
                         htmlBuilder.AppendLine("</script>");
+
+                       
+
+
 
                         // Lặp qua từng kênh để trích xuất thông tin chương trình
                         channelCount = 0; // Đặt lại biến đếm để sử dụng đúng cách trong vòng lặp trích xuất chương trình
@@ -205,27 +251,6 @@ namespace Bai04
                 MessageBox.Show("Lỗi: " + ex.Message);
             }
         }
-
-
-
-
-
-        private void formSize_changed(object sender, EventArgs e)
-        {
-            // Lấy kích thước mới của form
-            int newWidth = this.Width;
-            int newHeight = this.Height;
-
-            // Tính tỉ lệ giữa kích thước mới của form và kích thước ban đầu của form
-            float widthRatio = (float)newWidth / initialFormWidth;
-            float heightRatio = (float)newHeight / initialFormHeight;
-
-            
-            // Cập nhật lại kích thước ban đầu của form
-            initialFormWidth = newWidth;
-            initialFormHeight = newHeight;
-        }
-
 
         private async void alarm_button_ClickAsync(object sender, EventArgs e)
         {
@@ -290,12 +315,7 @@ namespace Bai04
             label1.Visible = true;
             label2.Visible = false;
             alarm_button.Visible = false;
-            progressBar1.Visible = false;
             string url = "https://betacinemas.vn/phim.htm";
-
-            progressBar1.Minimum = 0;
-            progressBar1.Maximum = 100;
-            progressBar1.Value = 0;
 
             try
             {
@@ -318,10 +338,6 @@ namespace Bai04
                 // Tạo nội dung HTML tùy chỉnh
                 StringBuilder htmlBuilder = new StringBuilder();
                 htmlBuilder.Append("<html><body>");
-
-                // Thiết lập giá trị tối đa của ProgressBar dựa trên số lượng phim
-                progressBar1.Maximum = movieNodes.Count;
-                int currentProgress = 0;
 
 
                 int i = 1;
@@ -393,11 +409,6 @@ namespace Bai04
                     htmlBuilder.Append("}");
                     htmlBuilder.Append("</script>");
 
-
-
-                    // Cập nhật tiến trình
-                    currentProgress++;
-                    progressBar1.Value = currentProgress;
                 }
 
 
@@ -408,9 +419,6 @@ namespace Bai04
 
                 // Hiển thị nội dung HTML tùy chỉnh trong WebView2
                 webView21.NavigateToString(htmlBuilder.ToString());
-
-                // Hoàn thành tiến trình
-                progressBar1.Value = progressBar1.Maximum;
             }
             catch (Exception ex)
             {
