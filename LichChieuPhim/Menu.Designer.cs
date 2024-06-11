@@ -62,7 +62,7 @@
             film_download_button.TabIndex = 1;
             film_download_button.Text = "Tải danh sách phim";
             film_download_button.UseVisualStyleBackColor = true;
-            film_download_button.Click += film_download_button_Click;
+            film_download_button.Click += film_active_download_button_Click;
             // 
             // label1
             // 

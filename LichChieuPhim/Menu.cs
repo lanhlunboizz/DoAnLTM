@@ -309,7 +309,7 @@ namespace Bai04
 
 
 
-        private async void film_download_button_Click(object sender, EventArgs e)
+        private async void film_active_download_button_Click(object sender, EventArgs e)
         {
             webView21.Visible = true;
             label1.Visible = true;
@@ -328,7 +328,7 @@ namespace Bai04
                 document.LoadHtml(htmlContent);
 
                 // Trích xuất thông tin phim
-                var movieNodes = document.DocumentNode.SelectNodes("//div[contains(@class, 'item')]");
+                var movieNodes = document.DocumentNode.SelectNodes("//div[@id='tab-1']//div[contains(@class, 'item')]");
                 if (movieNodes == null)
                 {
                     MessageBox.Show("Không tìm thấy thông tin về các bộ phim.", "Lỗi");
@@ -353,12 +353,21 @@ namespace Bai04
                     // Sử dụng giá trị của i trong SelectSingleNode để tìm liên kết phim
 
                     var movieLinkNode = node.SelectSingleNode($"//*[@id='tab-1']/div/div[{i}]/div/div[2]/div[1]/h3/a");
-                    i++;
+                    
                     // Trích xuất tiêu đề phim từ liên kết phim
                     string title = movieLinkNode?.InnerText.Trim() ?? "Không có tiêu đề";
 
+                    // Tìm kiếm và trích xuất thông tin phim
+                    var genreNode = node.SelectSingleNode($"//*[@id='tab-1']/div/div[{i}]/div/div[2]/div[1]/ul/li[1]/text()");
+                    var durationNode = node.SelectSingleNode($"//*[@id='tab-1']/div/div[{i}]/div/div[2]/div[1]/ul/li[2]/text()");
+
+                    string genreMovie = genreNode?.InnerText.Trim() ?? "Không có thông tin";
+                    string durationMovie = durationNode?.InnerText.Trim() ?? "Không có thông tin";
+
                     // Trích xuất URL chi tiết phim từ liên kết phim
                     string relativeMovieUrl = movieLinkNode?.GetAttributeValue("href", string.Empty) ?? string.Empty;
+
+                    i++;
 
                     // Tạo đường dẫn URL chi tiết của phim bằng cách ghép nối tên miền với đường dẫn tương đối
                     string baseUrl = "https://betacinemas.vn";
@@ -389,6 +398,8 @@ namespace Bai04
                     htmlBuilder.Append("<div style='flex: 1;'>");
                     htmlBuilder.AppendFormat("<h3><a href='{0}' target='_blank'>{1}</a></h3>", movieUrl, title);
                     // Thêm thông tin khác về phim ở đây (ví dụ: thể loại, ngày công chiếu, mô tả, v.v.)
+                    htmlBuilder.AppendFormat("<p>Thể loại: {0}</p>", genreMovie);
+                    htmlBuilder.AppendFormat("<p>Thời lượng: {0}</p>", durationMovie);
 
                     htmlBuilder.Append("</div>");
                     htmlBuilder.Append("</div>");
